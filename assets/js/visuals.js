@@ -11,7 +11,7 @@ float torus(vec3 p,vec2 t){return length(vec2(length(p.xz)-t.x,p.y))-t.y;}
 float sphere(vec3 p,float r){return length(p)-r;}
 float cube(vec3 p,vec3 b){vec3 q=abs(p)-b;return length(max(q,0.))+min(max(q.x,max(q.y,q.z)),0.);}
 vec2 map(vec3 p){
- p.x-=.76;p.xy*=rot(.11*sin(tm*.3));
+ p.x-=.76+mouse.x*.14;p.y+=mouse.y*.1;p.xy*=rot(.11*sin(tm*.3));
  vec3 a=p;a.yz*=rot(tm*.24+.5);a.xy*=rot(tm*.13+.24);
  vec3 b=p;b.xy*=rot(-tm*.18+.64);b.yz*=rot(1.1);
  vec3 c=p;c.xy*=rot(tm*.09+.6);
@@ -29,7 +29,7 @@ vec3 base=obj.y<1.5?vec3(.32,.42,.98):obj.y<2.5?vec3(.87,.97,.34):obj.y<3.5?vec3
 float spec=pow(max(dot(reflect(-light,n),-rd),0.),38.),groove=sin(p.y*25.+p.x*15.)*.035;
 vec3 surface=base*(.21+dif*.69+groove)+spec*vec3(1.,1.,.9)*.92+rim*vec3(.7,.92,1.)*.65;col=mix(surface,col,1.-exp(-.0017*t*t*t));}
 return col;}
-vec3 tunnelScene(vec2 uv){vec2 p=uv;p.x-=.37;p*=1.22;float a=atan(p.y,p.x),r=length(p)+.001,flow=tm*.2;vec3 col=vec3(.013,.019,.055);float depth=7.8/(r+.34),lines=pow(1.-abs(sin(depth*2.-flow*2.5+a*.33)),36.),cables=pow(abs(sin(a*9.+.11*sin(depth))),24.),tunnel=lines*(.2+.8*cables);vec3 blue=vec3(.10,.27,.95),lime=vec3(.76,.98,.23);col+=mix(blue,lime,.5+.5*sin(depth*.6+flow))*(tunnel*.9);col+=blue*pow(lines,3.)*.33;col+=lime*exp(-18.*abs(r-.50-.04*sin(tm*.31)))*.22;col+=vec3(.15,.18,.40)*exp(-8.*r);vec2 st=floor((uv+tm*.004)*vec2(128.,94.));float star=step(.986,hash(st));col+=vec3(.46,.57,1.)*star*(.17+.83*hash(st+14.));col+=.004*hash(floor(uv*vec2(30.)));return col;}
+vec3 tunnelScene(vec2 uv){vec2 p=uv;p.x-=.37+mouse.x*.05;p.y-=mouse.y*.05;p*=1.22;float a=atan(p.y,p.x),r=length(p)+.001,flow=tm*.2;vec3 col=vec3(.013,.019,.055);float depth=7.8/(r+.34),lines=pow(1.-abs(sin(depth*2.-flow*2.5+a*.33)),36.),cables=pow(abs(sin(a*9.+.11*sin(depth))),24.),tunnel=lines*(.2+.8*cables);vec3 blue=vec3(.10,.27,.95),lime=vec3(.76,.98,.23);col+=mix(blue,lime,.5+.5*sin(depth*.6+flow))*(tunnel*.9);col+=blue*pow(lines,3.)*.33;col+=lime*exp(-18.*abs(r-.50-.04*sin(tm*.31)))*.22;col+=vec3(.15,.18,.40)*exp(-8.*r);vec2 st=floor((uv+tm*.004)*vec2(128.,94.));float star=step(.986,hash(st));col+=vec3(.46,.57,1.)*star*(.17+.83*hash(st+14.));col+=.004*hash(floor(uv*vec2(30.)));return col;}
 void main(){vec2 uv=(gl_FragCoord.xy-.5*res)/res.y;vec3 c=mode<.5?orbitScene(uv):tunnelScene(uv);c=c/(1.+c*.35);c=pow(max(c,0.),vec3(.91));gl_FragColor=vec4(c,1.);}
 `;
 const canvases=['visual-canvas','history-canvas'].map(id=>document.getElementById(id)).filter(Boolean);if(!canvases.length)return;
@@ -44,8 +44,39 @@ const u={res:gl.getUniformLocation(prog,'res'),tm:gl.getUniformLocation(prog,'tm
 items.push({canvas,gl,prog,buffer,loc,u,kind:canvas.id==='history-canvas'?1:0,visible:false,drawn:false,w:0,h:0});canvas.classList.add('ready')}
 if(!items.length)return;
 function draw(item,time){const{canvas,gl,prog,buffer,loc,u}=item,r=canvas.getBoundingClientRect();if(r.width<1||r.height<1)return;const dpr=Math.min(devicePixelRatio||1,item.kind?.86:(innerWidth<800?.76:.78),1250/Math.max(1,r.width));const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
-if(w!==item.w||h!==item.h){canvas.width=w;canvas.height=h;item.w=w;item.h=h;gl.viewport(0,0,w,h)}gl.useProgram(prog);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);gl.uniform2f(u.res,w,h);gl.uniform1f(u.mode,item.kind);gl.uniform1f(u.tm,reduced?0:time);gl.uniform2f(u.mouse,0,0);gl.uniform1f(u.motion,reduced?0:1);gl.drawArrays(gl.TRIANGLES,0,6);item.drawn=true;}
-if('IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>{const x=items.find(i=>i.canvas===e.target);if(x)x.visible=e.isIntersecting}),{rootMargin:'15%'});items.forEach(i=>io.observe(i.canvas))}else items.forEach(x=>x.visible=true);
-let last=0;function frame(now){requestAnimationFrame(frame);if(document.hidden)return;const fps=innerWidth<800?22:30;if(now-last<1000/fps)return;last=now;for(const item of items)if(item.visible&&(!reduced||!item.drawn))draw(item,Math.min(now/1000,1e6))}
-requestAnimationFrame(frame);document.addEventListener('visibilitychange',()=>{if(!document.hidden)items.forEach(x=>x.drawn=false)});addEventListener('resize',()=>items.forEach(x=>x.drawn=false),{passive:true});
+if(w!==item.w||h!==item.h){canvas.width=w;canvas.height=h;item.w=w;item.h=h;gl.viewport(0,0,w,h)}gl.useProgram(prog);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);gl.uniform2f(u.res,w,h);gl.uniform1f(u.mode,item.kind);gl.uniform1f(u.tm,reduced?0:time);gl.uniform2f(u.mouse,mouseX,mouseY);gl.uniform1f(u.motion,reduced?0:1);gl.drawArrays(gl.TRIANGLES,0,6);item.drawn=true;}
+
+/* No permanent idle RAF. Start only when a WebGL section is on screen;
+   pause instantly on tab hide / scroll-away; render one static frame for reduced motion. */
+let raf=0,last=0,mouseX=0,mouseY=0;
+function wake(){if(!raf&&!document.hidden&&items.some(item=>item.visible)){raf=requestAnimationFrame(frame)}}
+function frame(now){
+ raf=0;if(document.hidden||!items.some(item=>item.visible))return;
+ const fps=innerWidth<800?20:30;
+ if(now-last>=1000/fps||items.some(item=>item.visible&&!item.drawn)){
+  last=now;
+  for(const item of items){if(item.visible&&(!reduced||!item.drawn))draw(item,Math.min(now/1000,1e6))}
+ }
+ if(!reduced)wake();
+}
+if('IntersectionObserver'in window){
+ const observer=new IntersectionObserver(entries=>{
+  for(const entry of entries){const item=items.find(i=>i.canvas===entry.target);if(!item)continue;
+   const visible=entry.isIntersecting;if(item.visible!==visible){item.visible=visible;if(visible)item.drawn=false}}
+  wake();
+ },{rootMargin:'8% 0px'});
+ items.forEach(i=>observer.observe(i.canvas));
+}else{items.forEach(i=>i.visible=true);wake()}
+if(!reduced){
+ addEventListener('pointermove',e=>{
+  if(!items.some(i=>i.visible))return;
+  mouseX=(e.clientX/Math.max(innerWidth,1)-.5)*2;
+  mouseY=(e.clientY/Math.max(innerHeight,1)-.5)*2;
+ },{passive:true});
+}
+items.forEach(item=>item.canvas.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();item.visible=false;item.canvas.classList.remove('ready');item.canvas.classList.add('no-webgl');
+}));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){items.forEach(i=>i.drawn=false);wake()}});
+addEventListener('resize',()=>{items.forEach(i=>i.drawn=false);wake()},{passive:true});
 })();
