@@ -31,7 +31,7 @@ html {scroll-padding-top:70px}
 .partners .logo-cell:hover{transform:translateY(-7px);box-shadow:0 23px 45px -35px rgba(0,0,0,.5);position:relative;z-index:2}
 .module-universe{isolation:isolate}
 .module-universe:before{content:'';position:absolute;pointer-events:none;z-index:0;width:min(70vw,950px);height:min(70vw,950px);border:1px solid rgba(184,196,255,.12);border-radius:50%;left:50%;top:25%;translate:-50% 0;box-shadow:0 0 0 65px rgba(95,117,255,.035),0 0 0 160px rgba(95,117,255,.02),inset 0 0 95px rgba(80,117,255,.13)}
-.module-universe>*{position:relative}
+.module-universe> :not(.grid-glow){position:relative}
 .module-workbench{perspective:1400px}
 .module-display{perspective:1200px}
 #module-preview{--swd-tilt-x:0deg;--swd-tilt-y:0deg;transition:transform .65s var(--swd-ease),box-shadow .65s var(--swd-ease)}
