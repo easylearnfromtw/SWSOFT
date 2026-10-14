@@ -1,2 +1,3 @@
 User-agent: *
 Allow: /
+Sitemap: https://easylearnfromtw.github.io/SWSOFT/sitemap.xml
